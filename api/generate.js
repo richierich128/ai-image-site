@@ -1,41 +1,38 @@
-export default async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
-    // Handle CORS preflight
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.status(200).end();
+document.getElementById("generateBtn").addEventListener("click", async () => {
+  const prompt = document.getElementById("prompt").value;
+  const style = document.querySelector(".style-btn.selected")?.textContent || "Real";
+
+  const response = await fetch("/api/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ prompt, style })
+  });
+
+  const prediction = await response.json();
+  const predictionUrl = prediction?.urls?.get;
+
+  if (!predictionUrl) {
+    alert("Failed to start generation.");
     return;
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  // Poll until generation is complete
+  let image;
+  while (!image) {
+    const res = await fetch(predictionUrl);
+    const data = await res.json();
+
+    if (data.status === "succeeded") {
+      image = data.output[data.output.length - 1];
+    } else if (data.status === "failed") {
+      alert("Image generation failed.");
+      return;
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5s before polling again
+    }
   }
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
-
-  const { prompt, style } = req.body;
-  const replicateApiToken = process.env.REPLICATE_API_TOKEN;
-
-  try {
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Token ${replicateApiToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        version: "7be55c3e0db835e5c4c15938a23fcfbc22e2e8587056bfa39fe6d3c65f37d5ed", // Stable Diffusion
-        input: {
-          prompt: `${prompt}, ${style} style`
-        }
-      })
-    });
-
-    const data = await response.json();
-    res.status(200).json(data);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong generating the image." });
-  }
-}
+  document.getElementById("generatedImage").src = image;
+});
