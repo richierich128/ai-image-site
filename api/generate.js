@@ -1,38 +1,48 @@
-document.getElementById("generateBtn").addEventListener("click", async () => {
-  const prompt = document.getElementById("prompt").value;
-  const style = document.querySelector(".style-btn.selected")?.textContent || "Real";
-
-  const response = await fetch("/api/generate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ prompt, style })
-  });
-
-  const prediction = await response.json();
-  const predictionUrl = prediction?.urls?.get;
-
-  if (!predictionUrl) {
-    alert("Failed to start generation.");
-    return;
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Poll until generation is complete
-  let image;
-  while (!image) {
-    const res = await fetch(predictionUrl);
-    const data = await res.json();
+  const replicateApiToken = process.env.REPLICATE_API_TOKEN;
 
-    if (data.status === "succeeded") {
-      image = data.output[data.output.length - 1];
-    } else if (data.status === "failed") {
-      alert("Image generation failed.");
-      return;
-    } else {
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5s before polling again
+  if (!replicateApiToken) {
+    return res.status(500).json({ error: "Missing Replicate API token" });
+  }
+
+  const { prompt, style } = req.body;
+
+  const modelVersion = "cjwbw/starryai-v1:cf0e308bfb40b7f4a074dbd749912c808c27f95aa3cb1e41412ff8c310dcf4c0"; // Replace with desired model version
+
+  const stylePromptMap = {
+    Real: "photo-realistic, high detail",
+    Anime: "anime style, colorful, vibrant",
+    AI: "abstract, futuristic, ai-generated"
+  };
+
+  const styledPrompt = `${prompt}, ${stylePromptMap[style] || ""}`;
+
+  try {
+    const replicateRes = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${replicateApiToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        version: modelVersion,
+        input: { prompt: styledPrompt }
+      })
+    });
+
+    const replicateData = await replicateRes.json();
+
+    if (replicateData.error) {
+      return res.status(500).json({ error: replicateData.error });
     }
-  }
 
-  document.getElementById("generatedImage").src = image;
-});
+    return res.status(200).json(replicateData);
+  } catch (error) {
+    console.error("Error from Replicate:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
