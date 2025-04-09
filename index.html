@@ -9,89 +9,169 @@
       margin: 0;
       padding: 0;
       background-color: #0d2f2b;
-      color: #ffffff;
+      color: white;
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
     }
-
-    #image-container {
+    #image-display {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
     }
-
-    #generatedImage {
+    #image-display img {
       max-width: 90%;
       max-height: 80%;
       border-radius: 10px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     }
-
     #controls {
       padding: 20px;
       background-color: #0b2624;
     }
-
-    #prompt {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: none;
+    #search-bar {
+      display: flex;
       margin-bottom: 10px;
     }
-
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px 0 0 5px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+    }
+    #generateBtn {
+      background-color: #2a9d8f;
+      color: white;
+      border-radius: 0 5px 5px 0;
+    }
     .style-btn {
-      padding: 8px 16px;
-      margin: 0 5px 10px 0;
       background-color: #1f6560;
       color: white;
-      border: none;
+      margin-right: 10px;
       border-radius: 5px;
-      cursor: pointer;
     }
-
     .style-btn.selected {
-      background-color: #2a9d8f;
+      background-color: #43c2b1;
     }
-
-    #generateBtn {
-      padding: 10px 20px;
-      font-size: 16px;
+    #download-btn {
       background-color: #00796b;
-      color: white;
-      border: none;
+      margin-top: 10px;
       border-radius: 5px;
-      cursor: pointer;
+    }
+    #loading {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #a0eec0;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-
-  <div id="image-container">
-    <img id="generatedImage" src="" alt="Generated image will appear here." />
+  <div id="image-display">
+    <img id="generatedImage" src="" alt="Generated image will appear here">
   </div>
 
   <div id="controls">
-    <input type="text" id="prompt" placeholder="Enter a prompt to generate image..." />
-    <div>
-      <button class="style-btn selected" onclick="selectStyle(this)">Real</button>
-      <button class="style-btn" onclick="selectStyle(this)">Anime</button>
-      <button class="style-btn" onclick="selectStyle(this)">AI</button>
+    <div id="search-bar">
+      <input type="text" id="prompt" placeholder="Describe your image...">
+      <button id="generateBtn">Create</button>
     </div>
-    <button id="generateBtn">Generate Image</button>
+
+    <div>
+      <button class="style-btn selected">Real</button>
+      <button class="style-btn">Anime</button>
+      <button class="style-btn">AI</button>
+    </div>
+
+    <button id="download-btn" style="display:none">Download Image</button>
+
+    <div id="loading"></div>
   </div>
 
   <script>
-    function selectStyle(button) {
-      document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('selected'));
-      button.classList.add('selected');
-    }
+    const styleButtons = document.querySelectorAll(".style-btn");
+    const downloadBtn = document.getElementById("download-btn");
+
+    styleButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        styleButtons.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+    });
+
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+      const prompt = document.getElementById("prompt").value;
+      const style = document.querySelector(".style-btn.selected")?.textContent || "Real";
+      const imgEl = document.getElementById("generatedImage");
+      const loadingEl = document.getElementById("loading");
+
+      imgEl.src = "";
+      imgEl.alt = "Generating...";
+      loadingEl.textContent = "Generating image...";
+      downloadBtn.style.display = "none";
+
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, style })
+        });
+
+        const prediction = await res.json();
+        const predictionUrl = prediction?.urls?.get;
+
+        if (!predictionUrl) {
+          alert("Failed to start image generation.");
+          loadingEl.textContent = "";
+          return;
+        }
+
+        let image;
+        while (!image) {
+          const poll = await fetch(predictionUrl);
+          const data = await poll.json();
+
+          if (data.status === "succeeded") {
+            image = data.output[data.output.length - 1];
+          } else if (data.status === "failed") {
+            alert("Image generation failed.");
+            loadingEl.textContent = "";
+            return;
+          } else {
+            await new Promise(r => setTimeout(r, 1500));
+          }
+        }
+
+        imgEl.src = image;
+        imgEl.alt = "Generated Image";
+        downloadBtn.style.display = "inline-block";
+        loadingEl.textContent = "";
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong.");
+        loadingEl.textContent = "";
+      }
+    });
+
+    downloadBtn.addEventListener("click", () => {
+      const imgEl = document.getElementById("generatedImage");
+      const link = document.createElement("a");
+      link.href = imgEl.src;
+      link.download = "generated-image.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
   </script>
-  <script src="generate.js"></script>
 </body>
 </html>
