@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unlimited AI Image Generator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0d2f2b;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      height: 100vh;
+    }#image-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  padding: 20px;
+}
+
+#image-display img {
+  max-width: 90%;
+  max-height: 80%;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+#controls {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: #0b2624;
+}
+
+#search-bar {
+  display: flex;
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px 0 0 5px;
+}
+
+button {
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  background-color: #2a9d8f;
+  color: white;
+  cursor: pointer;
+  border-radius: 0 5px 5px 0;
+}
+
+.style-options {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.style-options button {
+  background-color: #1f6560;
+  border-radius: 5px;
+}
+
+.loading {
+  font-size: 18px;
+  color: #a0eec0;
+  text-align: center;
+}
+
+#download-btn {
+  margin-top: 15px;
+  background-color: #00796b;
+  border-radius: 5px;
+}
+
+  </style>
+</head>
+<body>
+  <div id="image-display">
+    <!-- Generated image will appear here -->
+  </div>  <div id="controls">
+    <div id="search-bar">
+      <input type="text" id="prompt" placeholder="Type keywords to create an image...">
+      <button onclick="generateImage()">Create</button>
+    </div>
+    <div class="style-options">
+      <button onclick="setStyle('real')">Real</button>
+      <button onclick="setStyle('anime')">Anime</button>
+      <button onclick="setStyle('ai')">AI</button>
+    </div>
+    <div class="style-options">
+      <button id="download-btn" onclick="downloadImage()">Download Image</button>
+    </div>
+    <div id="loading" class="loading"></div>
+  </div>  <script>
+    let style = 'real';
+    let currentImageUrl = '';
+
+    function setStyle(selectedStyle) {
+      style = selectedStyle;
+    }
+
+    async function generateImage() {
+      const prompt = document.getElementById('prompt').value;
+      const loadingDiv = document.getElementById('loading');
+      loadingDiv.innerText = 'Generating image...';
+
+      // Dummy delay to simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const dummyUrl = `https://dummyimage.com/800x600/0d2f2b/ffffff&text=${encodeURIComponent(prompt + ' (' + style + ')')}`;
+      currentImageUrl = dummyUrl;
+      document.getElementById('image-display').innerHTML = `<img id="generated-img" src="${dummyUrl}" alt="Generated Image" />`;
+      loadingDiv.innerText = '';
+    }
+
+    function downloadImage() {
+      if (!currentImageUrl) return alert('Please generate an image first.');
+
+      const link = document.createElement('a');
+      link.href = currentImageUrl;
+      link.download = 'generated-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script></body>
+</html>
