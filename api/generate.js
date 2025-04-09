@@ -3,46 +3,34 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const replicateApiToken = process.env.REPLICATE_API_TOKEN;
-
-  if (!replicateApiToken) {
-    return res.status(500).json({ error: "Missing Replicate API token" });
-  }
-
   const { prompt, style } = req.body;
 
-  const modelVersion = "cjwbw/starryai-v1:cf0e308bfb40b7f4a074dbd749912c808c27f95aa3cb1e41412ff8c310dcf4c0"; // Replace with desired model version
-
-  const stylePromptMap = {
-    Real: "photo-realistic, high detail",
-    Anime: "anime style, colorful, vibrant",
-    AI: "abstract, futuristic, ai-generated"
-  };
-
-  const styledPrompt = `${prompt}, ${stylePromptMap[style] || ""}`;
+  const fullPrompt = `${style} style: ${prompt}`;
 
   try {
-    const replicateRes = await fetch("https://api.replicate.com/v1/predictions", {
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
-        Authorization: `Token ${replicateApiToken}`,
+        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        version: modelVersion,
-        input: { prompt: styledPrompt }
+        version: "YOUR_REPLICATE_MODEL_VERSION",
+        input: {
+          prompt: fullPrompt
+        }
       })
     });
 
-    const replicateData = await replicateRes.json();
-
-    if (replicateData.error) {
-      return res.status(500).json({ error: replicateData.error });
+    if (!response.ok) {
+      const error = await response.json();
+      return res.status(500).json({ error: "Failed to create prediction", details: error });
     }
 
-    return res.status(200).json(replicateData);
-  } catch (error) {
-    console.error("Error from Replicate:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    const prediction = await response.json();
+    res.status(200).json(prediction);
+  } catch (err) {
+    console.error("API Error:", err);
+    res.status(500).json({ error: "Unexpected error occurred" });
   }
 }
