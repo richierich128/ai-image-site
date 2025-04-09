@@ -8,8 +8,8 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
   imgEl.alt = "Generating...";
 
   try {
-    // Step 1: Start image generation
-    const response = await fetch("/api/generate", {
+    // Send request to backend using full Vercel URL
+    const response = await fetch("https://ai-image-site.vercel.app/api/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -25,7 +25,7 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
       return;
     }
 
-    // Step 2: Poll until image is ready
+    // Poll the prediction URL until image is ready
     let image;
     while (!image) {
       const res = await fetch(predictionUrl);
@@ -37,15 +37,14 @@ document.getElementById("generateBtn").addEventListener("click", async () => {
         alert("Image generation failed.");
         return;
       } else {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5 sec
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5 seconds
       }
     }
 
-    // Step 3: Show image
     imgEl.src = image;
     imgEl.alt = "Generated Image";
   } catch (err) {
-    console.error("Error generating image:", err);
-    alert("Something went wrong. Check console/logs.");
+    console.error("Error:", err);
+    alert("Something went wrong.");
   }
 });
