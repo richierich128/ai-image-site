@@ -1,8 +1,6 @@
 {
-  "name": "ai-image-site",
-  "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "replicate": "^0.24.0"
+    "replicate": "^0.20.1"
   }
 }
