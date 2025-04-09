@@ -106,26 +106,30 @@
       const prompt = document.getElementById('prompt').value;
       const loadingDiv = document.getElementById('loading');
       loadingDiv.innerText = 'Generating image...';
+
       try {
-        const response = await fetch('https://ai-image-site-git-main-richie-richs-projects-3f8d27b7.vercel.app/api/generate', {
-          method: 'POST',
+        const response = await fetch("https://ai-image-site-prgdmjb3x-richie-richs-projects-3f8d27b7.vercel.app/api/generate", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({ prompt, style })
         });
 
         const data = await response.json();
-
-        if (!response.ok) throw new Error(data.error || 'Failed to generate image');
-
-        currentImageUrl = data.imageUrl;
-        document.getElementById('image-display').innerHTML = `<img id="generated-img" src="${currentImageUrl}" alt="Generated Image" />`;
-        loadingDiv.innerText = '';
-      } catch (error) {
-        loadingDiv.innerText = 'Something went wrong.';
-        console.error(error);
+        if (data.imageUrl) {
+          currentImageUrl = data.imageUrl;
+          document.getElementById('image-display').innerHTML = `<img id="generated-img" src="${data.imageUrl}" alt="Generated Image" />`;
+        } else {
+          throw new Error("No image URL in response");
+        }
+      } catch (err) {
+        loadingDiv.innerText = "Something went wrong.";
+        console.error("Error generating image:", err);
+        return;
       }
+
+      loadingDiv.innerText = '';
     }
 
     function downloadImage() {
