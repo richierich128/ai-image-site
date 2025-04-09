@@ -1,3 +1,9 @@
+import Replicate from "replicate";
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -5,32 +11,20 @@ export default async function handler(req, res) {
 
   const { prompt, style } = req.body;
 
-  const fullPrompt = `${style} style: ${prompt}`;
-
   try {
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-        "Content-Type": "application/json"
+    const prediction = await replicate.predictions.create({
+      version: "ac732df8", // SD 2.1
+      model: "stability-ai/stable-diffusion",
+      input: {
+        prompt: `${prompt}, ${style}`,
+        width: 512,
+        height: 512
       },
-      body: JSON.stringify({
-        version: "YOUR_REPLICATE_MODEL_VERSION",
-        input: {
-          prompt: fullPrompt
-        }
-      })
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return res.status(500).json({ error: "Failed to create prediction", details: error });
-    }
-
-    const prediction = await response.json();
     res.status(200).json(prediction);
   } catch (err) {
-    console.error("API Error:", err);
-    res.status(500).json({ error: "Unexpected error occurred" });
+    console.error("Error generating image:", err);
+    res.status(500).json({ error: "Something went wrong generating the image" });
   }
 }
