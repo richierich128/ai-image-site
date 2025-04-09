@@ -7,48 +7,38 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #002d2d;
-      color: white;
+      padding: 2rem;
+      background: #111;
+      color: #eee;
       text-align: center;
-      padding: 40px 20px;
     }
     input, button {
-      padding: 10px;
-      margin: 10px;
-      font-size: 16px;
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin: 1rem 0;
+      width: 90%;
+      max-width: 400px;
     }
-    .style-btn {
-      background-color: #014040;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
+    .generated-img {
+      margin-top: 2rem;
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #000;
     }
-    .style-btn.selected {
-      background-color: #009999;
-    }
-    #generatedImage {
-      margin-top: 30px;
-      max-width: 90%;
-      border-radius: 10px;
+    #status {
+      margin-top: 1rem;
+      color: orange;
     }
   </style>
 </head>
 <body>
   <h1>AI Image Generator</h1>
-  <input type="text" id="prompt" placeholder="Enter prompt..." />
-  <div>
-    <button class="style-btn selected">Real</button>
-    <button class="style-btn">Anime</button>
-    <button class="style-btn">AI</button>
-  </div>
-  <button id="generateBtn">Create</button>
-  <div>
-    <img id="generatedImage" alt="Generated Image" />
-  </div>
+  <input id="prompt" type="text" placeholder="Enter your prompt here" />
+  <br />
+  <button id="generate-btn">Generate Image</button>
+  <div id="status"></div>
+  <div id="image-container"></div>
 
-  <!-- Updated script path -->
-  <script src="frontend/generate.js"></script>
+  <script src="generate.js" defer></script>
 </body>
 </html>
